@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Madness - Round 1 (4×4 Small Numbers) | MaScie 2026/2027</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js for Web Audio Synthesis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+        .heading-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        /* Equalizer bar keyframes */
+        @keyframes eq-bar {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+        .eq-bar-1 { animation: eq-bar 0.35s infinite ease-in-out; }
+        .eq-bar-2 { animation: eq-bar 0.55s infinite ease-in-out 0.1s; }
+        .eq-bar-3 { animation: eq-bar 0.45s infinite ease-in-out 0.2s; }
+        .eq-bar-4 { animation: eq-bar 0.65s infinite ease-in-out 0.05s; }
+
+        /* Grid Cell Selection Effect */
+        .cell-selected {
+            box-shadow: 0 0 0 3px #4f46e5;
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen w-screen overflow-x-hidden flex flex-col justify-between p-2 sm:p-4 selection:bg-indigo-500 selection:text-white">
+
+    <div class="max-w-4xl w-full mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden p-4 sm:p-6 flex flex-col min-h-[92vh] justify-between relative">
+        
+        <!-- Header Section -->
+        <header class="text-center border-b border-slate-200 pb-3 relative flex-shrink-0">
+            <div class="inline-block bg-indigo-50 text-indigo-600 font-semibold px-3 py-0.5 rounded-full text-xs tracking-wider uppercase mb-1.5 border border-indigo-200">
+                MaScie 2026/2027 • Mathematics & Science Competition
+            </div>
+            <h1 class="heading-font text-3xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-600 leading-tight">
+                MATH MADNESS
+            </h1>
+            <p class="text-sm sm:text-lg font-bold text-slate-600 uppercase tracking-wider mt-0.5">
+                — Round 1: 4×4 Grid Small Numbers Addition —
+            </p>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-lg mx-auto">
+                Click cells to calculate sums interactively or generate a new random grid for practice!
+            </p>
+        </header>
+
+        <!-- Controls Bar -->
+        <div class="flex flex-wrap justify-center items-center gap-2 sm:gap-3 my-3 flex-shrink-0">
+            
+            <!-- Fullscreen Button -->
+            <button onclick="toggleFullscreen()" id="btnFullscreen" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3.5 py-2 rounded-xl transition-all shadow-sm border border-slate-300 text-xs sm:text-sm active:scale-95">
+                <svg id="fullscreenIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4"></path></svg>
+                <span id="fullscreenBtnText">Fullscreen</span>
+            </button>
+
+            <!-- Music Control Button -->
+            <button onclick="toggleMusic()" id="btnMusic" class="flex items-center gap-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:to-pink-700 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-md hover:shadow-indigo-500/20 active:scale-95 text-xs sm:text-sm border border-indigo-400/30">
+                <svg id="musicIconPlay" class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <svg id="musicIconPause" class="w-4 h-4 fill-current hidden" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                <span id="musicBtnText">Battle Music</span>
+                
+                <!-- Equalizer Animation Widget -->
+                <div id="eqWidget" class="hidden flex items-end gap-0.5 h-3 ml-1">
+                    <span class="w-1 bg-white rounded-full eq-bar-1"></span>
+                    <span class="w-1 bg-indigo-200 rounded-full eq-bar-2"></span>
+                    <span class="w-1 bg-pink-200 rounded-full eq-bar-3"></span>
+                    <span class="w-1 bg-purple-200 rounded-full eq-bar-4"></span>
+                </div>
+            </button>
+
+            <!-- Generate New Random Grid Button -->
+            <button onclick="generateNewGrid()" class="flex items-center gap-1.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-3.5 py-2 rounded-xl transition-all shadow-md hover:shadow-cyan-600/20 active:scale-95 text-xs sm:text-sm border border-cyan-500/30">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                <span>Randomize Grid</span>
+            </button>
+
+            <!-- Answer Key Button -->
+            <button onclick="toggleAnswerKey()" id="btnAnswerKey" class="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-md hover:shadow-amber-600/20 active:scale-95 text-xs sm:text-sm border border-amber-500/30">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                <span id="btnText">Show Answer Key</span>
+            </button>
+
+        </div>
+
+        <!-- Main Interactive 4x4 Grid Container -->
+        <div class="flex-1 my-2 flex flex-col items-center justify-center">
+            
+            <!-- Interactive Selection Helper / Counter Bar -->
+            <div id="selectionBar" class="w-full max-w-xl mb-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 flex justify-between items-center text-xs sm:text-sm">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                    <span class="text-slate-600 font-medium">Selected Cells Sum:</span>
+                    <span id="selectedSumVal" class="font-mono font-extrabold text-indigo-600 text-base sm:text-lg">0</span>
+                </div>
+                <button onclick="clearSelection()" class="text-xs text-slate-500 hover:text-rose-600 font-semibold underline transition-colors">
+                    Reset Selection
+                </button>
+            </div>
+
+            <div class="w-full max-w-xl overflow-hidden rounded-2xl border-2 border-slate-300 shadow-lg bg-white p-2 sm:p-3">
+                <table class="w-full text-center border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 font-bold border-b-2 border-slate-300 text-xs sm:text-sm">
+                            <th class="p-2 sm:p-3 border-r border-slate-200 text-[11px] sm:text-xs text-slate-500">R \ C</th>
+                            <th class="p-2 sm:p-3 border-r border-slate-200">C1</th>
+                            <th class="p-2 sm:p-3 border-r border-slate-200">C2</th>
+                            <th class="p-2 sm:p-3 border-r border-slate-200">C3</th>
+                            <th class="p-2 sm:p-3 border-r border-slate-200">C4</th>
+                            <th id="colSumHeader" class="p-2 sm:p-3 hidden text-amber-800 bg-amber-50 border-l-2 border-slate-300">Row Sum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gridBody" class="divide-y divide-slate-200 font-mono text-lg sm:text-2xl font-bold">
+                        <!-- 4x4 Grid rows generated dynamically -->
+                    </tbody>
+                    <tfoot id="gridFoot" class="hidden font-mono font-bold border-t-2 border-slate-300 bg-slate-50 text-amber-900 text-sm sm:text-lg">
+                        <!-- Column sums and grand total -->
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Answer Breakdown Modal Overlay -->
+        <div id="answerModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto text-slate-800">
+                <button onclick="toggleAnswerKey()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <h3 class="heading-font text-xl font-bold text-amber-600 mb-3 flex items-center gap-2 border-b border-slate-200 pb-2">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Answer Key Details (4×4)
+                </h3>
+
+                <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <h4 class="font-bold text-indigo-700 mb-2 border-b border-slate-200 pb-1 text-center">Row Sums:</h4>
+                        <ul id="rowSumsList" class="space-y-1 font-mono text-slate-700"></ul>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <h4 class="font-bold text-indigo-700 mb-2 border-b border-slate-200 pb-1 text-center">Column Sums:</h4>
+                        <ul id="colSumsList" class="space-y-1 font-mono text-slate-700"></ul>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                    <span class="text-xs sm:text-sm font-semibold text-amber-800 uppercase tracking-wider block">Grand Total (Sum of 16 Numbers):</span>
+                    <span id="grandTotalVal" class="text-3xl font-extrabold text-amber-600 font-mono">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-[11px] sm:text-xs text-slate-500 border-t border-slate-200 pt-2 flex-shrink-0 flex justify-between items-center px-2">
+            <span>MaScie 2026/2027 Competition Series</span>
+            <span class="text-slate-600 font-semibold">Grid 4×4 Addition</span>
+        </footer>
+
+    </div>
+
+    <script>
+        // Initial 4x4 Matrix with small non-negative integers (0 to 5)
+        let currentGrid = [
+            [2, 1, 3, 1],
+            [1, 2, 0, 2],
+            [0, 1, 2, 1],
+            [1, 1, 1, 0]
+        ];
+
+        let selectedCells = new Set();
+        let showAnswer = false;
+        let isPlayingMusic = false;
+        let audioInitialized = false;
+
+        // Tone.js Synth Instances
+        let bassSynth, leadSynth, hihatSynth, kickSynth;
+        let bassLoop, leadLoop, drumLoop;
+
+        // Render function for 4x4 Grid
+        function renderGrid() {
+            const tbody = document.getElementById('gridBody');
+            const tfoot = document.getElementById('gridFoot');
+            const rowSumsList = document.getElementById('rowSumsList');
+            const colSumsList = document.getElementById('colSumsList');
+            const grandTotalVal = document.getElementById('grandTotalVal');
+
+            tbody.innerHTML = '';
+            rowSumsList.innerHTML = '';
+            colSumsList.innerHTML = '';
+
+            let colTotals = [0, 0, 0, 0];
+            let grandTotal = 0;
+
+            currentGrid.forEach((row, rIdx) => {
+                let rowSum = row.reduce((a, b) => a + b, 0);
+                grandTotal += rowSum;
+
+                let tr = document.createElement('tr');
+                tr.className = (rIdx % 2 === 0) ? 'bg-white' : 'bg-slate-50/80';
+
+                let rowHtml = `<td class="p-2 sm:p-3 border-r border-slate-200 text-xs sm:text-sm font-bold text-slate-500 bg-slate-100">Row ${rIdx + 1}</td>`;
+                
+                row.forEach((val, cIdx) => {
+                    let cellId = `c_${rIdx}_${cIdx}`;
+                    let isSelected = selectedCells.has(cellId);
+                    
+                    let colorStyle = val === 0 ? 'text-slate-400' : 'text-slate-800';
+
+                    let bgSelectionStyle = isSelected 
+                        ? 'bg-indigo-100 ring-2 ring-indigo-600 scale-95 shadow-md text-indigo-900 font-black' 
+                        : 'hover:bg-indigo-50/60 cursor-pointer';
+
+                    rowHtml += `
+                        <td onclick="toggleCellSelection(${rIdx}, ${cIdx})" 
+                            id="${cellId}" 
+                            class="p-3 sm:p-5 border-r border-slate-200 font-mono font-extrabold transition-all ${colorStyle} ${bgSelectionStyle}">
+                            ${val}
+                        </td>`;
+                    
+                    colTotals[cIdx] += val;
+                });
+
+                rowHtml += `<td class="p-2 sm:p-3 ${showAnswer ? '' : 'hidden'} text-amber-800 bg-amber-50 font-extrabold border-l-2 border-slate-300">${rowSum}</td>`;
+
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+
+                rowSumsList.innerHTML += `<li class="flex justify-between border-b border-slate-200 py-1"><span class="text-slate-500">Row ${rIdx + 1}:</span><span class="font-bold text-indigo-600">${rowSum}</span></li>`;
+            });
+
+            colTotals.forEach((cSum, cIdx) => {
+                colSumsList.innerHTML += `<li class="flex justify-between border-b border-slate-200 py-1"><span class="text-slate-500">Column ${cIdx + 1}:</span><span class="font-bold text-indigo-600">${cSum}</span></li>`;
+            });
+
+            // Table Footer (Column Sums & Grand Total)
+            let footHtml = `<tr><td class="p-2 sm:p-3 border-r border-slate-200 text-xs font-bold text-slate-500 bg-slate-100">Col Sum</td>`;
+            colTotals.forEach(cSum => {
+                footHtml += `<td class="p-2 sm:p-3 border-r border-slate-200 text-amber-800 bg-amber-50">${cSum}</td>`;
+            });
+            footHtml += `<td class="p-2 sm:p-3 text-amber-900 bg-amber-100 font-black border-l-2 border-slate-300">${grandTotal}</td></tr>`;
+            tfoot.innerHTML = footHtml;
+
+            grandTotalVal.innerText = grandTotal;
+            updateSelectedSum();
+        }
+
+        // Toggle Cell Selection for Interactive Adding
+        function toggleCellSelection(r, c) {
+            let cellId = `c_${r}_${c}`;
+            if (selectedCells.has(cellId)) {
+                selectedCells.delete(cellId);
+            } else {
+                selectedCells.add(cellId);
+            }
+            renderGrid();
+        }
+
+        function clearSelection() {
+            selectedCells.clear();
+            renderGrid();
+        }
+
+        function updateSelectedSum() {
+            let total = 0;
+            selectedCells.forEach(cellId => {
+                let parts = cellId.split('_');
+                let r = parseInt(parts[1]);
+                let c = parseInt(parts[2]);
+                total += currentGrid[r][c];
+            });
+            document.getElementById('selectedSumVal').innerText = total;
+        }
+
+        // Generate Random 4x4 Grid with Small Non-Negative Integers (0 to 5)
+        function generateNewGrid() {
+            currentGrid = Array(4).fill(0).map(() => 
+                Array(4).fill(0).map(() => Math.floor(Math.random() * 6))
+            );
+            selectedCells.clear();
+            renderGrid();
+        }
+
+        // Toggle Answer Key Modal / Display
+        function toggleAnswerKey() {
+            showAnswer = !showAnswer;
+            
+            const btnText = document.getElementById('btnText');
+            const colSumHeader = document.getElementById('colSumHeader');
+            const gridFoot = document.getElementById('gridFoot');
+            const answerModal = document.getElementById('answerModal');
+
+            if (showAnswer) {
+                btnText.innerText = "Hide Answer Key";
+                colSumHeader.classList.remove('hidden');
+                gridFoot.classList.remove('hidden');
+                answerModal.classList.remove('hidden');
+            } else {
+                btnText.innerText = "Show Answer Key";
+                colSumHeader.classList.add('hidden');
+                gridFoot.classList.add('hidden');
+                answerModal.classList.add('hidden');
+            }
+
+            renderGrid();
+        }
+
+        // Toggle Fullscreen Mode
+        function toggleFullscreen() {
+            const btnText = document.getElementById('fullscreenBtnText');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+                btnText.innerText = "Exit Fullscreen";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                btnText.innerText = "Fullscreen";
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const btnText = document.getElementById('fullscreenBtnText');
+            if (!document.fullscreenElement) {
+                btnText.innerText = "Fullscreen";
+            } else {
+                btnText.innerText = "Exit Fullscreen";
+            }
+        });
+
+        function initAudioEngine() {
+            if (audioInitialized) return;
+
+            Tone.Transport.bpm.value = 138;
+
+            // Bass Synth
+            bassSynth = new Tone.MonoSynth({
+                oscillator: { type: 'sawtooth' },
+                filter: { Q: 2, type: 'lowpass', rollover: -24 },
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.1 },
+                filterEnvelope: { attack: 0.01, decay: 0.15, sustain: 0.2, baseFrequency: 90, octaves: 3 }
+            }).toDestination();
+            bassSynth.volume.value = -10;
+
+            // Arpeggio Lead Synth
+            leadSynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'triangle' },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.05, release: 0.1 }
+            }).toDestination();
+            leadSynth.volume.value = -14;
+
+            // Drums
+            kickSynth = new Tone.MembraneSynth({
+                pitchDecay: 0.05,
+                octaves: 5,
+                oscillator: { type: 'sine' },
+                envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 0.4 }
+            }).toDestination();
+            kickSynth.volume.value = -6;
+
+            hihatSynth = new Tone.NoiseSynth({
+                noise: { type: 'white' },
+                envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.04 }
+            }).toDestination();
+            hihatSynth.volume.value = -22;
+
+            // Bassline Loop
+            const bassNotes = ['E2', 'E2', 'G2', 'E2', 'A2', 'E2', 'Bb2', 'B2'];
+            let bassIdx = 0;
+            bassLoop = new Tone.Loop(time => {
+                let note = bassNotes[bassIdx % bassNotes.length];
+                bassSynth.triggerAttackRelease(note, '16n', time);
+                bassIdx++;
+            }, '16n');
+
+            // Arp Lead Loop
+            const arpNotes = [
+                ['E4', 'B4'], ['G4'], ['B4', 'E5'], ['G5'],
+                ['A4', 'C5'], ['F5'], ['B4', 'D#5'], ['B5']
+            ];
+            let arpIdx = 0;
+            leadLoop = new Tone.Loop(time => {
+                let note = arpNotes[arpIdx % arpNotes.length];
+                leadSynth.triggerAttackRelease(note, '16n', time);
+                arpIdx++;
+            }, '8n');
+
+            // Drum Loop
+            let step = 0;
+            drumLoop = new Tone.Loop(time => {
+                if (step % 4 === 0) {
+                    kickSynth.triggerAttackRelease('C1', '8n', time);
+                }
+                if (step % 2 === 1) {
+                    hihatSynth.triggerAttackRelease('16n', time);
+                }
+                step = (step + 1) % 16;
+            }, '16n');
+
+            audioInitialized = true;
+        }
+
+        async function toggleMusic() {
+            const btnMusic = document.getElementById('btnMusic');
+            const musicBtnText = document.getElementById('musicBtnText');
+            const musicIconPlay = document.getElementById('musicIconPlay');
+            const musicIconPause = document.getElementById('musicIconPause');
+            const eqWidget = document.getElementById('eqWidget');
+
+            await Tone.start();
+            initAudioEngine();
+
+            if (!isPlayingMusic) {
+                bassLoop.start(0);
+                leadLoop.start(0);
+                drumLoop.start(0);
+                Tone.Transport.start();
+
+                isPlayingMusic = true;
+                musicBtnText.innerText = "Stop Music";
+                musicIconPlay.classList.add('hidden');
+                musicIconPause.classList.remove('hidden');
+                eqWidget.classList.remove('hidden');
+                btnMusic.classList.add('ring-2', 'ring-indigo-400');
+            } else {
+                Tone.Transport.stop();
+                bassLoop.stop();
+                leadLoop.stop();
+                drumLoop.stop();
+
+                isPlayingMusic = false;
+                musicBtnText.innerText = "Battle Music";
+                musicIconPlay.classList.remove('hidden');
+                musicIconPause.classList.add('hidden');
+                eqWidget.classList.add('hidden');
+                btnMusic.classList.remove('ring-2', 'ring-indigo-400');
+            }
+        }
+
+        // Initialize grid on load
+        window.onload = function() {
+            renderGrid();
+        };
+    </script>
+</body>
+</html>
